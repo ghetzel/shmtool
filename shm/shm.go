@@ -10,7 +10,7 @@ import (
 	"unsafe"
 )
 
-const Version = `0.0.1`
+const Version = `0.0.2`
 
 type SharedMemoryFlags int
 
@@ -119,4 +119,17 @@ func (self *Segment) Write(p []byte) (n int, err error) {
 		self.Offset += length
 		return length, nil
 	}
+}
+
+func (self *Segment) Attach() (unsafe.Pointer, error) {
+	if addr, err := C.sysv_shm_attach(C.int(self.Id)); err == nil {
+		return unsafe.Pointer(addr), nil
+	} else {
+		return nil, err
+	}
+}
+
+func (self *Segment) Detach(addr unsafe.Pointer) error {
+	_, err := C.sysv_shm_detach(addr)
+	return err
 }
