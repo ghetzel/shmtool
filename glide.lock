@@ -1,0 +1,12 @@
+hash: f7dc03796db1a960c4c9cfa6a33c7aabb70873111f2589067c678b5077b59924
+updated: 2016-05-09T15:25:36.226736536-04:00
+imports:
+- name: github.com/ghetzel/cli
+  version: 4733699ce30faa633c4db36ebfbe427963593d7d
+- name: github.com/Sirupsen/logrus
+  version: cd7d1bbe41066b6c1f19780f895901052150a575
+- name: golang.org/x/sys
+  version: b776ec39b3e54652e09028aaaaac9757f4f8211a
+  subpackages:
+  - unix
+devImports: []

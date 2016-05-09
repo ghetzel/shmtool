@@ -1,0 +1,4 @@
+package: github.com/ghetzel/shmtool
+import:
+- package: github.com/Sirupsen/logrus
+- package: github.com/ghetzel/cli
