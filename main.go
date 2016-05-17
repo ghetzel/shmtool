@@ -84,10 +84,10 @@ func main() {
 
 				if err == nil {
 					if offset := c.Int(`offset`); offset > 0 {
-						segment.Offset = offset
+						segment.Seek(offset)
 					}
 
-					log.Debugf("Opened shared memory segment %d: size is %d, offset is %d", segment.Id, segment.Size, segment.Offset)
+					log.Debugf("Opened shared memory segment %d: size is %d, offset is %d", segment.Id, segment.Size, segment.Position())
 					fmt.Printf("%d\n", segment.Id)
 
 					if n, err := io.Copy(segment, os.Stdin); err == nil || err == io.EOF {
@@ -125,10 +125,10 @@ func main() {
 						}
 
 						if offset := c.Int(`offset`); offset > 0 {
-							segment.Offset = offset
+							segment.Seek(offset)
 						}
 
-						log.Debugf("Opened shared memory segment %d: size is %d, offset is %d", segment.Id, segment.Size, segment.Offset)
+						log.Debugf("Opened shared memory segment %d: size is %d, offset is %d", segment.Id, segment.Size, segment.Position())
 						log.Debugf("Reading %d bytes...", readSize)
 
 						if n, err := io.CopyN(os.Stdout, segment, int64(readSize)); err == nil {
