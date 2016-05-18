@@ -1,6 +1,7 @@
 all: vendor fmt build
 
 update:
+	rm -rf vendor
 	glide up --strip-vcs --update-vendored
 
 vendor:

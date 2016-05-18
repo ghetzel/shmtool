@@ -73,6 +73,11 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 		return 0, fmt.Errorf("Cannot read shared memory segment: SHMID not set")
 	}
 
+	// if the offset runs past the segment size, we've reached the end
+	if self.offset >= self.Size {
+		return 0, io.EOF
+	}
+
 	length := len(p)
 
 	// read length cannot exceed segment size
@@ -80,9 +85,9 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 		length = self.Size
 	}
 
-	// if the offset runs past the segment size, we've reached the end
-	if self.offset >= self.Size {
-		return 0, io.EOF
+	// if length+offset would overrun, make length equal (size - offset), which is what remains
+	if (length + self.offset) > self.Size {
+		length = self.Size - self.offset
 	}
 
 	buffer := C.malloc(C.size_t(length))
@@ -101,6 +106,11 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 
 // will do a memcpy() of up to self.size from p to self.addr
 func (self *Segment) Write(p []byte) (n int, err error) {
+	// if the offset runs past the segment size, we've reached the end
+	if self.offset >= self.Size {
+		return 0, io.EOF
+	}
+
 	length := len(p)
 
 	// write length cannot exceed segment size
@@ -108,9 +118,9 @@ func (self *Segment) Write(p []byte) (n int, err error) {
 		length = self.Size
 	}
 
-	// if the offset runs past the segment size, we've reached the end
-	if self.offset >= self.Size {
-		return 0, io.EOF
+	// if length+offset would overrun, make length equal (size - offset), which is what remains
+	if (length + self.offset) > self.Size {
+		length = self.Size - self.offset
 	}
 
 	if _, err := C.sysv_shm_write(C.int(self.Id), unsafe.Pointer(&p[0]), C.int(length), C.int(self.offset)); err != nil {
