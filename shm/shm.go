@@ -91,6 +91,7 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 	}
 
 	buffer := C.malloc(C.size_t(length))
+	defer C.free(buffer)
 
 	if _, err := C.sysv_shm_read(C.int(self.Id), buffer, C.int(length), C.int(self.offset)); err != nil {
 		return 0, err
