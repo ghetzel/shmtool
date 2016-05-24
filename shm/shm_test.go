@@ -1,12 +1,12 @@
 package shm
 
 import (
-    "testing"
-    "hash/adler32"
-    "bytes"
-    "io"
-    "io/ioutil"
-    "fmt"
+	"bytes"
+	"fmt"
+	"hash/adler32"
+	"io"
+	"io/ioutil"
+	"testing"
 )
 
 func makeSegment(t *testing.T, size int, callback func(segment *Segment) error) {
@@ -15,7 +15,7 @@ func makeSegment(t *testing.T, size int, callback func(segment *Segment) error) 
 
 	if err != nil {
 		t.Errorf("Failed to allocate 1024b segment: %v", err)
-	}else{
+	} else {
 		if err := callback(segment); err != nil {
 			t.Error(err)
 		}
@@ -37,7 +37,7 @@ func writeFullSegment(t *testing.T, size int, callback func(segment *Segment, in
 			segment.Reset()
 
 			return callback(segment, input)
-		}else{
+		} else {
 			return fmt.Errorf("Failed to write segment data: %v", err)
 		}
 	})
@@ -49,7 +49,7 @@ func TestAllocate(t *testing.T) {
 	})
 }
 
-func TestWriteFull(t *testing.T) {
+func TestWriteFullReadFull(t *testing.T) {
 	writeFullSegment(t, 1024, func(segment *Segment, input []byte) error {
 		shouldBe := adler32.Checksum(input)
 
@@ -63,7 +63,7 @@ func TestWriteFull(t *testing.T) {
 
 			if shouldBe != actuallyIs {
 				return fmt.Errorf("Checksum of output does not match input; expected: %d, got: %d", shouldBe, actuallyIs)
-			}else{
+			} else {
 				t.Logf("Checksum OK: input[%d] %d == output[%d] %d", len(input), shouldBe, len(output), actuallyIs)
 			}
 		}
@@ -90,7 +90,7 @@ func TestWriteFullPartialReadHead(t *testing.T) {
 
 			if shouldBe != actuallyIs {
 				return fmt.Errorf("Checksum of output does not match input; expected: %d, got: %d", shouldBe, actuallyIs)
-			}else{
+			} else {
 				t.Logf("Checksum OK: input[0:512] %d == output[%d] %d", shouldBe, len(output), actuallyIs)
 			}
 		}
@@ -98,7 +98,6 @@ func TestWriteFullPartialReadHead(t *testing.T) {
 		return nil
 	})
 }
-
 
 func TestWriteFullPartialReadTail(t *testing.T) {
 	writeFullSegment(t, 1024, func(segment *Segment, input []byte) error {
@@ -116,7 +115,7 @@ func TestWriteFullPartialReadTail(t *testing.T) {
 
 			if shouldBe != actuallyIs {
 				return fmt.Errorf("Checksum of output does not match input; expected: %d, got: %d", shouldBe, actuallyIs)
-			}else{
+			} else {
 				t.Logf("Checksum OK: input[512:] %d == output[%d] %d", shouldBe, len(output), actuallyIs)
 			}
 		}
@@ -145,7 +144,7 @@ func TestWriteFullPartialReadMiddle(t *testing.T) {
 
 			if shouldBe != actuallyIs {
 				return fmt.Errorf("Checksum of output does not match input; expected: %d, got: %d", shouldBe, actuallyIs)
-			}else{
+			} else {
 				t.Logf("Checksum OK: input[256:768] %d == output[%d] %d", shouldBe, len(output), actuallyIs)
 			}
 		}
@@ -154,13 +153,10 @@ func TestWriteFullPartialReadMiddle(t *testing.T) {
 	})
 }
 
-
-
-func TestWriteFullPartialReadChunks(t *testing.T) {
+func TestWriteFullPartialReadChunksDirect(t *testing.T) {
 	writeFullSegment(t, 1024, func(segment *Segment, input []byte) error {
 		var err error
 		output := make([]byte, 4)
-
 
 		segment.Seek(255)
 		_, err = segment.Read(output[0:1])
@@ -196,3 +192,41 @@ func TestWriteFullPartialReadChunks(t *testing.T) {
 	})
 }
 
+// func TestWriteFullPartialReadChunksFunc(t *testing.T) {
+// 	writeFullSegment(t, 1024, func(segment *Segment, input []byte) error {
+// 		var err error
+// 		output := make([]byte, 4)
+
+// 		segment.Seek(255)
+// 		_, err = segment.Read(output[0:1])
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		segment.Seek(511)
+// 		_, err = segment.Read(output[1:2])
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		segment.Seek(767)
+// 		_, err = segment.Read(output[2:3])
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		segment.Seek(1023)
+// 		_, err = segment.Read(output[3:4])
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		for i, v := range output {
+// 			if v != 0xFF {
+// 				return fmt.Errorf("Wrong value for output[%d]; expected: 0xFF, got: %X", i, v)
+// 			}
+// 		}
+
+// 		return nil
+// 	})
+// }

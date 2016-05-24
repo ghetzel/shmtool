@@ -25,8 +25,8 @@ const (
 // SHM-backed file
 type Segment struct {
 	Id     int
-	Size   int
-	offset int
+	Size   int64
+	offset int64
 }
 
 // this is where shmget() with IPC_CREAT will happen
@@ -39,7 +39,7 @@ func Open(id int) (*Segment, error) {
 	if sz, err := C.sysv_shm_get_size(C.int(id)); err == nil {
 		return &Segment{
 			Id:   id,
-			Size: int(sz),
+			Size: int64(sz),
 		}, nil
 	} else {
 		return nil, err
@@ -53,7 +53,7 @@ func OpenSegment(size int, flags SharedMemoryFlags, perms os.FileMode) (*Segment
 		} else {
 			return &Segment{
 				Id:   int(shmid),
-				Size: int(actual_size),
+				Size: int64(actual_size),
 			}, nil
 		}
 
@@ -67,6 +67,21 @@ func DestroySegment(id int) error {
 	return err
 }
 
+func (self *Segment) ReadChunk(length int64, start int64) ([]byte, error) {
+	if length < 0 {
+		length = self.Size
+	}
+
+	buffer := C.malloc(C.size_t(length))
+	defer C.free(buffer)
+
+	if _, err := C.sysv_shm_read(C.int(self.Id), buffer, C.int(length), C.int(start)); err != nil {
+		return nil, err
+	}
+
+	return C.GoBytes(buffer, C.int(length)), nil
+}
+
 // will do a memcpy() of len(p) into p from self.addr
 func (self *Segment) Read(p []byte) (n int, err error) {
 	if self.Id == 0 {
@@ -78,12 +93,7 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 		return 0, io.EOF
 	}
 
-	length := len(p)
-
-	// destination array must be nonzero length
-	if length == 0 {
-		return 0, io.EOF
-	}
+	length := int64(len(p))
 
 	// read length cannot exceed segment size
 	if length > self.Size {
@@ -95,11 +105,18 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 		length = self.Size - self.offset
 	}
 
-	if _, err := C.sysv_shm_read(C.int(self.Id), unsafe.Pointer(&p[0]), C.int(length), C.int(self.offset)); err == nil {
-		self.offset += length
-		return length, nil
-	}else{
+	buffer := C.malloc(C.size_t(length))
+	defer C.free(buffer)
+
+	if _, err := C.sysv_shm_read(C.int(self.Id), buffer, C.int(length), C.int(self.offset)); err != nil {
 		return 0, err
+	}
+
+	if v := copy(p, C.GoBytes(buffer, C.int(length))); v > 0 {
+		self.offset += int64(v)
+		return v, nil
+	} else {
+		return v, io.EOF
 	}
 }
 
@@ -110,7 +127,7 @@ func (self *Segment) Write(p []byte) (n int, err error) {
 		return 0, io.EOF
 	}
 
-	length := len(p)
+	length := int64(len(p))
 
 	// write length cannot exceed segment size
 	if length > self.Size {
@@ -126,7 +143,7 @@ func (self *Segment) Write(p []byte) (n int, err error) {
 		return 0, err
 	} else {
 		self.offset += length
-		return length, nil
+		return int(length), nil
 	}
 }
 
@@ -134,11 +151,11 @@ func (self *Segment) Reset() {
 	self.offset = 0
 }
 
-func (self *Segment) Seek(position int) {
+func (self *Segment) Seek(position int64) {
 	self.offset = position
 }
 
-func (self *Segment) Position() int {
+func (self *Segment) Position() int64 {
 	return self.offset
 }
 

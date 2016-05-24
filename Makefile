@@ -15,5 +15,8 @@ fmt:
 test:
 	go test -v ./shm
 
+bench:
+	go test -bench=. ./shm
+
 build:
 	go build -o bin/`basename ${PWD}`
