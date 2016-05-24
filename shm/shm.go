@@ -80,6 +80,11 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 
 	length := len(p)
 
+	// destination array must be nonzero length
+	if length == 0 {
+		return 0, io.EOF
+	}
+
 	// read length cannot exceed segment size
 	if length > self.Size {
 		length = self.Size
@@ -90,18 +95,11 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 		length = self.Size - self.offset
 	}
 
-	buffer := C.malloc(C.size_t(length))
-	defer C.free(buffer)
-
-	if _, err := C.sysv_shm_read(C.int(self.Id), buffer, C.int(length), C.int(self.offset)); err != nil {
+	if _, err := C.sysv_shm_read(C.int(self.Id), unsafe.Pointer(&p[0]), C.int(length), C.int(self.offset)); err == nil {
+		self.offset += length
+		return length, nil
+	}else{
 		return 0, err
-	}
-
-	if v := copy(p, C.GoBytes(buffer, C.int(length))); v > 0 {
-		self.offset += v
-		return v, nil
-	} else {
-		return v, io.EOF
 	}
 }
 
@@ -155,4 +153,8 @@ func (self *Segment) Attach() (unsafe.Pointer, error) {
 func (self *Segment) Detach(addr unsafe.Pointer) error {
 	_, err := C.sysv_shm_detach(addr)
 	return err
+}
+
+func (self *Segment) Destroy() error {
+	return DestroySegment(self.Id)
 }

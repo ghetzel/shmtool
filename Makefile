@@ -12,5 +12,8 @@ fmt:
 	gofmt -w .
 	gofmt -w shm/..
 
+test:
+	go test -v ./shm
+
 build:
 	go build -o bin/`basename ${PWD}`
