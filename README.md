@@ -1,4 +1,4 @@
-# shmtool [![GoDoc](https://godoc.org/github.com/ghetzel/shmtool?status.svg)](https://godoc.org/github.com/ghetzel/shmtool)
+# shmtool [![GoDoc](https://godoc.org/github.com/ghetzel/shmtool?status.svg)](https://godoc.org/github.com/ghetzel/shmtool/shm)
 
 A command line utility and library for interacting with System V-style shared memory segments, written in Golang.
 
