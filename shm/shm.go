@@ -1,3 +1,19 @@
+// A command line utility and library for interacting with System V-style shared memory segments,
+// written in Golang.
+//
+// Shared memory is an inter-process communication mechanism that allows for multiple,
+// independent processes toaccess and modify the same portion of system memory for the purpose of
+// sharing data between them.  This library implements a Golang wrapper around the original
+// implementation of this which is present on almost all *NIX systems that implement portions of the
+// UNIX System V feature set.
+
+// The use of the calls implemented by this library has largely been supplanted by POSIX shared memory
+// (http://man7.org/linux/man-pages/man7/shm_overview.7.html) and the mmap() system call, but there are
+// some use cases that still require this particular approach to shared memory management.  One notable
+// example is the MIT-SHM X Server extension
+// (https://www.x.org/releases/X11R7.7/doc/xextproto/shm.html) which expects SysV shared memory
+// semantics.
+//
 package shm
 
 // #include "shm.h"
@@ -22,19 +38,23 @@ const (
 	NoReserve                      = C.SHM_NORESERVE
 )
 
-// SHM-backed file
+// A native representation of a SysV shared memory segment
 type Segment struct {
 	Id     int
 	Size   int64
 	offset int64
 }
 
-// this is where shmget() with IPC_CREAT will happen
+// Create a new shared memory segment with the given size (in bytes).  The system will automatically
+// round the size up to the nearest memory page boundary (typically 4KB).
+//
 func Create(size int) (*Segment, error) {
 	return OpenSegment(size, (IpcCreate | IpcExclusive), 0600)
 }
 
-// shmget() without IPC_CREAT
+// Open an existing shared memory segment located at the given ID.  This ID is returned in the
+// struct that is populated by Create(), or by the shmget() system call.
+//
 func Open(id int) (*Segment, error) {
 	if sz, err := C.sysv_shm_get_size(C.int(id)); err == nil {
 		return &Segment{
@@ -46,6 +66,9 @@ func Open(id int) (*Segment, error) {
 	}
 }
 
+// Creates a shared memory segment of a given size, and also allows for the specification of
+// creation flags supported by the shmget() call, as well as specifying permissions.
+//
 func OpenSegment(size int, flags SharedMemoryFlags, perms os.FileMode) (*Segment, error) {
 	if shmid, err := C.sysv_shm_open(C.int(size), C.int(flags), C.int(perms)); err == nil {
 		if actual_size, err := C.sysv_shm_get_size(shmid); err != nil {
@@ -62,11 +85,15 @@ func OpenSegment(size int, flags SharedMemoryFlags, perms os.FileMode) (*Segment
 	}
 }
 
+// Destroy a shared memory segment by its ID
+//
 func DestroySegment(id int) error {
 	_, err := C.sysv_shm_close(C.int(id))
 	return err
 }
 
+// Read some or all of the shared memory segment and return a byte slice.
+//
 func (self *Segment) ReadChunk(length int64, start int64) ([]byte, error) {
 	if length < 0 {
 		length = self.Size
@@ -82,7 +109,8 @@ func (self *Segment) ReadChunk(length int64, start int64) ([]byte, error) {
 	return C.GoBytes(buffer, C.int(length)), nil
 }
 
-// will do a memcpy() of len(p) into p from self.addr
+// Implements the io.Reader interface for shared memory
+//
 func (self *Segment) Read(p []byte) (n int, err error) {
 	if self.Id == 0 {
 		return 0, fmt.Errorf("Cannot read shared memory segment: SHMID not set")
@@ -120,7 +148,8 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 	}
 }
 
-// will do a memcpy() of up to self.size from p to self.addr
+// Implements the io.Writer interface for shared memory
+//
 func (self *Segment) Write(p []byte) (n int, err error) {
 	// if the offset runs past the segment size, we've reached the end
 	if self.offset >= self.Size {
@@ -147,18 +176,31 @@ func (self *Segment) Write(p []byte) (n int, err error) {
 	}
 }
 
+
+// Resets the internal offset counter for this segment, allowing subsequent calls
+// to Read() or Write() to start from the beginning.
+//
 func (self *Segment) Reset() {
 	self.offset = 0
 }
 
+// Seek to a specified position within this segment.  Subsequent calls to Read()
+// or Write() will start from this position.
+//
 func (self *Segment) Seek(position int64) {
 	self.offset = position
 }
 
+// Returns the current position of the Read/Write pointer.
+//
 func (self *Segment) Position() int64 {
 	return self.offset
 }
 
+// Attaches the segment to the current processes resident memory.  The pointer
+// that is returned is the actual memory address of the shared memory segment
+// for use with third party libraries that can directly read from memory.
+//
 func (self *Segment) Attach() (unsafe.Pointer, error) {
 	if addr, err := C.sysv_shm_attach(C.int(self.Id)); err == nil {
 		return unsafe.Pointer(addr), nil
@@ -167,11 +209,15 @@ func (self *Segment) Attach() (unsafe.Pointer, error) {
 	}
 }
 
+// Detaches the segment from the current processes memory space.
+//
 func (self *Segment) Detach(addr unsafe.Pointer) error {
 	_, err := C.sysv_shm_detach(addr)
 	return err
 }
 
+// Destroys the current shared memory segment.
+//
 func (self *Segment) Destroy() error {
 	return DestroySegment(self.Id)
 }
