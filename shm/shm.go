@@ -1,5 +1,5 @@
 // Shared memory is an inter-process communication mechanism that allows for multiple,
-// independent processes toaccess and modify the same portion of system memory for the purpose of
+// independent processes to access and modify the same portion of system memory for the purpose of
 // sharing data between them.  This library implements a Golang wrapper around the original
 // implementation of this which is present on almost all *NIX systems that implement portions of the
 // UNIX System V feature set.
