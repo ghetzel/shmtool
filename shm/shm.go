@@ -1,6 +1,3 @@
-// A command line utility and library for interacting with System V-style shared memory segments,
-// written in Golang.
-//
 // Shared memory is an inter-process communication mechanism that allows for multiple,
 // independent processes toaccess and modify the same portion of system memory for the purpose of
 // sharing data between them.  This library implements a Golang wrapper around the original
