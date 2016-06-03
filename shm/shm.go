@@ -6,7 +6,7 @@
 // sharing data between them.  This library implements a Golang wrapper around the original
 // implementation of this which is present on almost all *NIX systems that implement portions of the
 // UNIX System V feature set.
-
+//
 // The use of the calls implemented by this library has largely been supplanted by POSIX shared memory
 // (http://man7.org/linux/man-pages/man7/shm_overview.7.html) and the mmap() system call, but there are
 // some use cases that still require this particular approach to shared memory management.  One notable
