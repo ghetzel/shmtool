@@ -181,11 +181,27 @@ func (self *Segment) Reset() {
 	self.offset = 0
 }
 
-// Seek to a specified position within this segment.  Subsequent calls to Read()
+// Implements the io.Seeker interface for shared memory.  Subsequent calls to Read()
 // or Write() will start from this position.
 //
-func (self *Segment) Seek(position int64) {
-	self.offset = position
+func (self *Segment) Seek(offset int64, whence int) (int64, error) {
+	var computedOffset int64
+
+	switch whence {
+	case 1:
+		computedOffset = self.offset + offset
+	case 2:
+		computedOffset = self.Size - offset
+	default:
+		computedOffset = offset
+	}
+
+	if computedOffset < 0 {
+		return 0, fmt.Errorf("Cannot seek to position before start of segment")
+	}
+
+	self.offset = computedOffset
+	return self.offset, nil
 }
 
 // Returns the current position of the Read/Write pointer.

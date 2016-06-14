@@ -104,7 +104,7 @@ func TestWriteFullPartialReadTail(t *testing.T) {
 		shouldBe := adler32.Checksum(input[512:1024])
 
 		// read back first 512b and make sure it's correct
-		segment.Seek(512)
+		segment.Seek(512, 0)
 
 		if output, err := ioutil.ReadAll(segment); err == nil {
 			if len(output) != 512 {
@@ -130,8 +130,8 @@ func TestWriteFullPartialReadMiddle(t *testing.T) {
 
 		var outwriter bytes.Buffer
 
-		// read back first 512b and make sure it's correct
-		segment.Seek(256)
+		// read back 512b starting from offset 256 and make sure it's correct
+		segment.Seek(256, 0)
 
 		if _, err := io.CopyN(&outwriter, segment, 512); err == nil {
 			output := outwriter.Bytes()
@@ -158,25 +158,25 @@ func TestWriteFullPartialReadChunksDirect(t *testing.T) {
 		var err error
 		output := make([]byte, 4)
 
-		segment.Seek(255)
+		segment.Seek(255, 0)
 		_, err = segment.Read(output[0:1])
 		if err != nil {
 			return err
 		}
 
-		segment.Seek(511)
+		segment.Seek(511, 0)
 		_, err = segment.Read(output[1:2])
 		if err != nil {
 			return err
 		}
 
-		segment.Seek(767)
+		segment.Seek(767, 0)
 		_, err = segment.Read(output[2:3])
 		if err != nil {
 			return err
 		}
 
-		segment.Seek(1023)
+		segment.Seek(1023, 0)
 		_, err = segment.Read(output[3:4])
 		if err != nil {
 			return err
@@ -192,41 +192,76 @@ func TestWriteFullPartialReadChunksDirect(t *testing.T) {
 	})
 }
 
-// func TestWriteFullPartialReadChunksFunc(t *testing.T) {
-// 	writeFullSegment(t, 1024, func(segment *Segment, input []byte) error {
-// 		var err error
-// 		output := make([]byte, 4)
 
-// 		segment.Seek(255)
-// 		_, err = segment.Read(output[0:1])
-// 		if err != nil {
-// 			return err
-// 		}
+func TestSeekAbsolute(t *testing.T) {
+	writeFullSegment(t, 16, func(segment *Segment, input []byte) error {
+		shouldBe := adler32.Checksum(input[8:16])
 
-// 		segment.Seek(511)
-// 		_, err = segment.Read(output[1:2])
-// 		if err != nil {
-// 			return err
-// 		}
+		var outwriter bytes.Buffer
 
-// 		segment.Seek(767)
-// 		_, err = segment.Read(output[2:3])
-// 		if err != nil {
-// 			return err
-// 		}
+		segment.Seek(8, 0)
 
-// 		segment.Seek(1023)
-// 		_, err = segment.Read(output[3:4])
-// 		if err != nil {
-// 			return err
-// 		}
+		if _, err := io.CopyN(&outwriter, segment, 8); err == nil {
+			output := outwriter.Bytes()
 
-// 		for i, v := range output {
-// 			if v != 0xFF {
-// 				return fmt.Errorf("Wrong value for output[%d]; expected: 0xFF, got: %X", i, v)
-// 			}
-// 		}
+			if len(output) != 8 {
+				return fmt.Errorf("Incorrect readback size; expected: %d, was: %d", 8, len(output))
+			}
 
-// 		return nil
-// 	})
-// }
+			actuallyIs := adler32.Checksum(output)
+
+			if shouldBe != actuallyIs {
+				return fmt.Errorf("Checksum of output does not match input; expected: %d, got: %d", shouldBe, actuallyIs)
+			} else {
+				t.Logf("Checksum OK: input[8:16] %d == output[%d] %d", shouldBe, len(output), actuallyIs)
+			}
+		}
+
+		return nil
+	})
+}
+
+
+func TestSeekRelative(t *testing.T) {
+	writeFullSegment(t, 16, func(segment *Segment, input []byte) error {
+		shouldBe := adler32.Checksum(input[8:16])
+
+		var outwriter bytes.Buffer
+
+		segment.Seek(4, 1)
+		segment.Seek(4, 1)
+
+		if _, err := io.CopyN(&outwriter, segment, 8); err == nil {
+			output := outwriter.Bytes()
+
+			if len(output) != 8 {
+				return fmt.Errorf("Incorrect readback size; expected: %d, was: %d", 8, len(output))
+			}
+
+			actuallyIs := adler32.Checksum(output)
+
+			if shouldBe != actuallyIs {
+				return fmt.Errorf("Checksum of output does not match input; expected: %d, got: %d", shouldBe, actuallyIs)
+			} else {
+				t.Logf("Checksum OK: input[8:16] %d == output[%d] %d", shouldBe, len(output), actuallyIs)
+			}
+		}
+
+		return nil
+	})
+}
+
+
+func TestSeekFromEnd(t *testing.T) {
+	writeFullSegment(t, 16, func(segment *Segment, input []byte) error {
+		if n, err := segment.Seek(8, 2); err == nil {
+			if n != (segment.Size - 8) {
+				return fmt.Errorf("Wrong offset; expected: %d, got: %d", (segment.Size - 8), n)
+			}
+		}else{
+			return err
+		}
+
+		return nil
+	})
+}
