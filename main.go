@@ -3,12 +3,13 @@ package main
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/ghetzel/cli"
-	"github.com/ghetzel/shmtool/shm"
 	"io"
 	"os"
 	"strconv"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/ghetzel/cli"
+	"github.com/ghetzel/shmtool/shm"
 )
 
 const DefaultLogLevel = `info`
@@ -83,8 +84,8 @@ func main() {
 				}
 
 				if err == nil {
-					if offset := c.Int(`offset`); offset > 0 {
-						segment.Seek(offset)
+					if offset := int64(c.Int(`offset`)); offset > 0 {
+						segment.Seek(offset, 0)
 					}
 
 					log.Debugf("Opened shared memory segment %d: size is %d, offset is %d", segment.Id, segment.Size, segment.Position())
@@ -118,14 +119,14 @@ func main() {
 					segmentId := int(id)
 
 					if segment, err := shm.Open(segmentId); err == nil {
-						readSize := c.Int(`size`)
+						readSize := int64(c.Int(`size`))
 
 						if readSize > segment.Size || readSize == 0 {
 							readSize = segment.Size
 						}
 
-						if offset := c.Int(`offset`); offset > 0 {
-							segment.Seek(offset)
+						if offset := int64(c.Int(`offset`)); offset > 0 {
+							segment.Seek(offset, 0)
 						}
 
 						log.Debugf("Opened shared memory segment %d: size is %d, offset is %d", segment.Id, segment.Size, segment.Position())
