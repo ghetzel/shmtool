@@ -192,7 +192,6 @@ func TestWriteFullPartialReadChunksDirect(t *testing.T) {
 	})
 }
 
-
 func TestSeekAbsolute(t *testing.T) {
 	writeFullSegment(t, 16, func(segment *Segment, input []byte) error {
 		shouldBe := adler32.Checksum(input[8:16])
@@ -220,7 +219,6 @@ func TestSeekAbsolute(t *testing.T) {
 		return nil
 	})
 }
-
 
 func TestSeekRelative(t *testing.T) {
 	writeFullSegment(t, 16, func(segment *Segment, input []byte) error {
@@ -251,14 +249,13 @@ func TestSeekRelative(t *testing.T) {
 	})
 }
 
-
 func TestSeekFromEnd(t *testing.T) {
 	writeFullSegment(t, 16, func(segment *Segment, input []byte) error {
 		if n, err := segment.Seek(8, 2); err == nil {
 			if n != (segment.Size - 8) {
 				return fmt.Errorf("Wrong offset; expected: %d, got: %d", (segment.Size - 8), n)
 			}
-		}else{
+		} else {
 			return err
 		}
 

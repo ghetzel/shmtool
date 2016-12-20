@@ -173,7 +173,6 @@ func (self *Segment) Write(p []byte) (n int, err error) {
 	}
 }
 
-
 // Resets the internal offset counter for this segment, allowing subsequent calls
 // to Read() or Write() to start from the beginning.
 //
