@@ -34,7 +34,7 @@ func main() {
 
     // Call the Attach() function on the created segment to get the memory address
     // where data can be read or written.  You must do this even if you don't use the address
-    // directly as this is what make the shared memory segment "part of" this processes memory
+    // directly as this is what makes the shared memory segment "part of" this process's memory
     // space, and thus allowing you to read from/write to it.
     if segmentAddress, err := segment.Attach(); err == nil {
       defer segment.Detach(segmentAddress)
@@ -45,7 +45,7 @@ func main() {
       }
 
       // Do something, maybe tell another process to start and read from this segment (which
-      // is communicated by telling the process the address in segmentAddress).
+      // is communicated by giving the other process the address in segmentAddress).
       //
 
       // Read the contents of the shared memory area, which may (or may not) have been modified by
