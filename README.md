@@ -2,6 +2,13 @@
 
 A command line utility and library for interacting with System V-style shared memory segments, written in Golang.
 
+### NOTE: This is not a portable, cross-platform shared memory library.  It works with Linux (known) and various Unix-based systems (untested).  It notably will NOT work on Windows.
+
+If you need a cross-platform and/or Windows-compatible library, check out: 
+
+- https://github.com/hidez8891/shm
+- https://github.com/edsrzf/mmap-go
+
 ## Overview
 Shared memory is an inter-process communication mechanism that allows for multiple, independent processes to access and modify the same portion of system memory for the purpose of sharing data between them.  This library implements a Golang wrapper around the original implementation of this which is present on almost all *NIX systems that implement portions of the UNIX System V feature set.
 
