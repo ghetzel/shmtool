@@ -1,12 +1,9 @@
-all: vendor fmt build
+.PHONY: fmt build test bench
+.EXPORT_ALL_VARIABLES:
 
-update:
-	rm -rf vendor
-	glide up --strip-vcs --update-vendored
+GO111MODULE ?= on
 
-vendor:
-	go list github.com/Masterminds/glide
-	glide install --strip-vcs --update-vendored
+all: fmt build test
 
 fmt:
 	gofmt -w .
@@ -19,4 +16,4 @@ bench:
 	go test -bench=. ./shm
 
 build:
-	go build -o bin/`basename ${PWD}`
+	go build -o bin/shmtool
