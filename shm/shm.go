@@ -23,7 +23,7 @@ import (
 	"unsafe"
 )
 
-const Version = `0.0.2`
+const Version = `0.0.3`
 
 type SharedMemoryFlags int
 
@@ -97,6 +97,11 @@ func (self *Segment) ReadChunk(length int64, start int64) ([]byte, error) {
 	}
 
 	buffer := C.malloc(C.size_t(length))
+
+	if buffer == nil {
+		return nil, fmt.Errorf("malloc failed")
+	}
+
 	defer C.free(buffer)
 
 	if _, err := C.sysv_shm_read(C.int(self.Id), buffer, C.int(length), C.int(start)); err != nil {
@@ -131,6 +136,11 @@ func (self *Segment) Read(p []byte) (n int, err error) {
 	}
 
 	buffer := C.malloc(C.size_t(length))
+
+	if buffer == nil {
+		return 0, fmt.Errorf("malloc failed")
+	}
+
 	defer C.free(buffer)
 
 	if _, err := C.sysv_shm_read(C.int(self.Id), buffer, C.int(length), C.int(self.offset)); err != nil {

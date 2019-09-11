@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/ghetzel/cli"
+	"github.com/ghetzel/go-stockutil/log"
 	"github.com/ghetzel/shmtool/shm"
 )
 
@@ -30,16 +30,7 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		// set log verbosity
-		if lvl := c.String(`log-level`); lvl != `` {
-			if l, err := log.ParseLevel(lvl); err == nil {
-				log.SetLevel(l)
-			} else {
-				log.Fatalf("Invalid log level '%s'", lvl)
-				return fmt.Errorf("%v", err)
-			}
-		}
-
+		log.SetLevelString(c.String(`log-level`))
 		return nil
 	}
 
