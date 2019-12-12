@@ -23,7 +23,7 @@ import (
 	"unsafe"
 )
 
-const Version = `0.0.3`
+const Version = `0.0.4`
 
 type SharedMemoryFlags int
 
