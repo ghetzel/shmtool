@@ -67,7 +67,9 @@ func main() {
 					segment, err = shm.Create(size)
 				} else {
 					if segmentId, err := strconv.ParseUint(c.Args().First(), 10, 64); err == nil {
-						segment, err = shm.Open(int(segmentId))
+						if segment, err = shm.Open(int(segmentId)); err != nil {
+							log.Fatalf("Failed to open segment %d: %v", segmentId, err)
+						}
 					} else {
 						log.Fatalf("Failed to parse segment ID: %v", err)
 						return
