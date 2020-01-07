@@ -114,7 +114,7 @@ func (self *Segment) ReadChunk(length int64, start int64) ([]byte, error) {
 // Implements the io.Reader interface for shared memory
 //
 func (self *Segment) Read(p []byte) (n int, err error) {
-	if self.Id == 0 {
+	if self.Id < 0 {
 		return 0, fmt.Errorf("Cannot read shared memory segment: SHMID not set")
 	}
 
