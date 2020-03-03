@@ -67,7 +67,7 @@ func Open(id int) (*Segment, error) {
 // creation flags supported by the shmget() call, as well as specifying permissions.
 //
 func OpenSegment(size int, flags SharedMemoryFlags, perms os.FileMode) (*Segment, error) {
-	if shmid, err := C.sysv_shm_open(C.int(size), C.int(flags), C.int(perms)); err == nil {
+	if shmid, err := C.sysv_shm_open(C.size_t(size), C.int(flags), C.int(perms)); err == nil {
 		if actual_size, err := C.sysv_shm_get_size(shmid); err != nil {
 			return nil, fmt.Errorf("Failed to retrieve SHM size: %v", err)
 		} else {
